@@ -23,17 +23,38 @@ Data Wrangling and Husbandry, Stevenson Bolivar Atuesta\
 # Executive Summary
 
 This section should summarize the project in a concise, compelling manner, as if presenting to a business stakeholder or client. Include:
-- Context of the project – Why is this analysis important?
-- Data sources – Briefly state where the data comes from and why it was chosen.
-- Main objective – What problem does the project address?
-- Key insights – The most valuable and actionable takeaways from the analysis.
-- Brief methodology – High-level summary of the data wrangling and analysis process.
+Context of the project – Why is this analysis important?
+
+- Trying to predict whether the audience will pay to see movie before release
+- can be applicable to any business use case for releasing a product
+
+Data sources – Briefly state where the data comes from and why it was chosen.
+
+- Data comes from youtube and box office mojo, youtube is most popular site to post trailers and get audience feedback
+
+Main objective – What problem does the project address?
+
+- before releasing a product seeing what the audience thinks
+
+Key insights – The most valuable and actionable takeaways from the analysis.
+Brief methodology – High-level summary of the data wrangling and analysis process.
 
 # Introduction
 
 Problem Statement – Define the issue being addressed.
+
+- Box office bombs, how can we improve revenue by looking at sentiment from a movie trailer?
+
 Project Relevance – Why is this project important? Who would benefit from the insights?
+
+- Relavant for any business use case, before releasing a product or movie, see what the public thinks
+
 Dataset Overview – Explain the source of the datasets, what they contain, and any initial observations.
+
+- Youtube comments contain sentiments of users about the trailer
+- box office mojo contains gross income of movie
+
+
 Goal of the Analysis – Clearly state the objectives and expected outcomes.
 
 # Data Wrangling & Cleaning
