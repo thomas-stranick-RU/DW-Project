@@ -2,6 +2,10 @@ library(tidyverse)
 library(httr)
 library(jsonlite)
 library(tidytext)
+library(usethis)
+
+use_git()
+use_github()
 
 #box office numbers
 library(rvest)
