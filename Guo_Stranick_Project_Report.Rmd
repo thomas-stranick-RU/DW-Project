@@ -1,0 +1,77 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(httr)
+library(jsonlite)
+library(tidytext)
+library(usethis)
+```
+
+# Sentiment of Movies
+
+## Lin Guo, Thomas Stranick
+
+Data Wrangling and Husbandry, Stevenson Bolivar Atuesta\
+5/7/25
+
+# Executive Summary
+
+This section should summarize the project in a concise, compelling manner, as if presenting to a business stakeholder or client. Include:
+- Context of the project – Why is this analysis important?
+- Data sources – Briefly state where the data comes from and why it was chosen.
+- Main objective – What problem does the project address?
+- Key insights – The most valuable and actionable takeaways from the analysis.
+- Brief methodology – High-level summary of the data wrangling and analysis process.
+
+# Introduction
+
+Problem Statement – Define the issue being addressed.
+Project Relevance – Why is this project important? Who would benefit from the insights?
+Dataset Overview – Explain the source of the datasets, what they contain, and any initial observations.
+Goal of the Analysis – Clearly state the objectives and expected outcomes.
+
+# Data Wrangling & Cleaning
+
+Describe the datasets before and after cleaning, making sure to present the process in a way that a client could understand:
+- Initial State of the Data – Size, missing values, inconsistencies, or errors.
+- Cleaning Process – Handling of missing values, duplicates, transformations, and formatting.
+- Data Merging – How were the datasets combined? What challenges were encountered?
+- Final Cleaned Dataset – Summary of the cleaned data (columns retained, new features created, etc.).
+- Use before-and-after comparisons (tables or summaries) to make it visually clear.
+
+# Exploratory Data Analysis (EDA)
+
+Overview of the Data After Cleaning – Key statistics and distributions.
+Visualizations – Charts, histograms, and boxplots to identify trends and patterns.
+Key Insights – Findings that help answer the project’s main questions.
+Clear Explanations – Interpret the insights in a way that a client could use for decision-making.
+
+# Key Insights & Discussion
+
+Summary of Findings – What were the most relevant takeaways from the EDA?
+Business or Practical Implications – Why do these findings matter? How can they be applied?
+Challenges Faced – What were the main difficulties encountered in data cleaning or analysis?
+Limitations & Next Steps – Any restrictions on the data, and what could be done in future analysis.
+
+# Conclusion
+
+Recap the project workflow (data wrangling, merging, and analysis).
+Emphasize the most significant insights gained.
+Provide suggestions for further work or recommendations based on findings.
+
+# References
+
+Cite all data sources, articles, and tools used in the project.
+
+# Appendix
+
+Data Cleaning Process – Full details on transformations, missing value handling, etc.
+Code Snippets – Well-commented Python or R code used in the analysis.
+Additional Visualizations – Any extra plots that support the findings.
+Each section in the main report should reference the appendix where technical details are provided.
