@@ -60,11 +60,16 @@ Goal of the Analysis – Clearly state the objectives and expected outcomes.
 # Data Wrangling & Cleaning
 
 Describe the datasets before and after cleaning, making sure to present the process in a way that a client could understand:
-- Initial State of the Data – Size, missing values, inconsistencies, or errors.
-- Cleaning Process – Handling of missing values, duplicates, transformations, and formatting.
-- Data Merging – How were the datasets combined? What challenges were encountered?
-- Final Cleaned Dataset – Summary of the cleaned data (columns retained, new features created, etc.).
-- Use before-and-after comparisons (tables or summaries) to make it visually clear.
+
+Initial State of the Data – Size, missing values, inconsistencies, or errors.
+
+- cleaning movies that did not have comments enabled, were re releases, or series of episodes
+
+
+Cleaning Process – Handling of missing values, duplicates, transformations, and formatting.
+Data Merging – How were the datasets combined? What challenges were encountered?
+Final Cleaned Dataset – Summary of the cleaned data (columns retained, new features created, etc.).
+Use before-and-after comparisons (tables or summaries) to make it visually clear.
 
 # Exploratory Data Analysis (EDA)
 

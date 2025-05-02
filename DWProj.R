@@ -4,8 +4,9 @@ library(jsonlite)
 library(tidytext)
 library(usethis)
 
-use_git()
-use_github()
+#for git
+#use_git()
+#use_github()
 
 #box office numbers
 library(rvest)
@@ -22,13 +23,14 @@ movies_2024_tidy
 
 youtube_links <- readxl::read_xlsx("Data Wrangling Project.xlsx") %>% 
   mutate(code = str_remove_all(link, "https?://(www\\.)?youtube\\.com/watch\\?v=")) %>% 
-  select(movie,code,rottentomato)
+  select(movie,code)
 
 youtube_links
 
 #left join to keep only movies with links
 
 movies_with_links <- left_join(youtube_links,movies_2024_tidy, by= join_by(movie))
+movies_with_links
 
 #getting the data from API
 
@@ -52,7 +54,7 @@ for (i in 1:nrow(youtube_links)) {
   movies_with_links$data[i] <- list(date_filtered)
 }
 
-print(movies_with_links,n=45)
+print(movies_with_links,n=90)
 
 #denest by token and remove all timestamps, non-words, and stop words
 
@@ -74,6 +76,6 @@ for (i in 1:nrow(movies_with_links)) {
   movies_with_links$score[i] <- sentiment_scores$n[2] - sentiment_scores$n[1]
 }
 
-print(movies_with_links,n=45)
+print(movies_with_links,n=90)
 
 movies_with_links %>% ggplot(aes(x=gross,y=score)) + geom_point()
