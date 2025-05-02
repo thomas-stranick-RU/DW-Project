@@ -25,6 +25,8 @@ Data Wrangling and Husbandry, Stevenson Bolivar Atuesta\
 This section should summarize the project in a concise, compelling manner, as if presenting to a business stakeholder or client. Include:
 Context of the project – Why is this analysis important?
 
+If you were making a movie, releasing a product, or just putting something out there for the world to see, wouldn't you want to know it would be a failure beforehand?  
+
 - Trying to predict whether the audience will pay to see movie before release
 - can be applicable to any business use case for releasing a product
 
@@ -43,32 +45,39 @@ Brief methodology – High-level summary of the data wrangling and analysis proc
 
 Problem Statement – Define the issue being addressed.
 
-- Box office bombs, how can we improve revenue by looking at sentiment from a movie trailer?
+Every year movies are released that are considered "box office bombs", most recently being Furiosa: A Mad Max Saga (2024) and Joker: Folie a Deux (2024). These movies lost \$120 and \$144 million respectively, when comparing their gross revenue to the cost to produce the film [1]. In anticipation of these movies, studios release trailers to show a preview of their movie that is coming out soon. Audiences globally get a chance to see a snippet of the movie before it releases and give their impressions and opinions. We can use sentiment analysis of these opinions to see how they think and feel about the movie. How can we predict the overall gross revenue of a movie before it is released by using sentiment analysis from pre-release trailers?
 
 Project Relevance – Why is this project important? Who would benefit from the insights?
 
 - Relavant for any business use case, before releasing a product or movie, see what the public thinks
 
+Using the audiences reaction to trailers could save studios millions of dollars, by making the movie more likable by the audience, or not releasing it all together. One famous example of using audience feedback to benefit a movie was the first Sonic the Hedgehog movie, where audience backlash over character design forced the creators to alter it [2]. Now the franchise is worth over 1 billion dollars and releasing it's third movie in the series [3]. Sentiment analysis of audience reaction could also generally translate to any business use case. If a company is releasing a product, it would be beneficial to know what the general audience thinks of it before selling. This way, the business can make its product more appealing to the customer, thus increasing sales and profitability.
+
 Dataset Overview – Explain the source of the datasets, what they contain, and any initial observations.
 
-- Youtube comments contain sentiments of users about the trailer
-- box office mojo contains gross income of movie
-
+For our sentiment analysis we chose to utilize Youtube comments left on trailers for the top grossing films of 2023 and 2024 that we can extract using the Youtube API. These comments contain positive or negative opinions about the trailer that we can then analyze for our sentiment analysis. The links for each Youtube video were gathered manually, as there was no dataset readily available. For our box office gross revenue data, we used web scraping on the Box Office Mojo website and found the gross revenue data for 2023 and 2024 movies [4,5]. 
 
 Goal of the Analysis – Clearly state the objectives and expected outcomes.
+
+Utilizing the comment and gross revenue datasets from 2023 and 2024, we can combine them and create a model that can predict gross revenue from emotional sentiment of trailers. Here, we will use 2023 to train a model, and 2024 to test and compare the results. This model will be the main objective for our analysis, and can help movie studios determine if their movie will be a success or a flop. We will also take a closer look at some of the most extreme positive and negative sentiment trailers, and see how much those movies made in gross revenue.
 
 # Data Wrangling & Cleaning
 
 Describe the datasets before and after cleaning, making sure to present the process in a way that a client could understand:
 
 Initial State of the Data – Size, missing values, inconsistencies, or errors.
-
-- cleaning movies that did not have comments enabled, were re releases, or series of episodes
-
-
 Cleaning Process – Handling of missing values, duplicates, transformations, and formatting.
 Data Merging – How were the datasets combined? What challenges were encountered?
+
+Cleaning the gross revenue data from Box Office Mojo was relatively straightforward. To start, we removed movies that were re-releases, since audiences would already know what they would be seeing. After that, we needed to convert some of the information into usable data, such as removing some of the characters from the gross revenue column to make it a number, and making sure that the dates contained their year and were in the correct format. We also only wanted to keep the release date, movie title, and gross revenue data to use in our analysis.
+
+The Youtube comment data was a bit trickier. After gathering all of the Youtube video links for each movie on the Box Office Mojo list created, we could then utilize the Youtube API to extract the comments from each trailer. This provided a few roadblocks. We wanted to make sure we were only looking at comments that were left before the release of the movie, since we did not want sentiments from someone who had already seen it. Here we joined the Box Office Mojo dataset on the Youtube video link data, and compared all comments with the movie release provided by the Box Office Mojo dataset. Some of the trailers did not contain comments, as the channel owner can turn them off on the video. We removed these from our analysis. On the remaining movies, we then needed to separate each word in the comment for our sentiment analysis. Youtube comments contain a number of different things such as video timestamps, other links, and emojis, that needed to be removed. We also needed to remove stop words such as "the", "and", or "but", since these would not convey emotion. Once we had only meaningful words, these could be analyzed by the "bing" sentiment dataset and determined to be positive or negative.
+
 Final Cleaned Dataset – Summary of the cleaned data (columns retained, new features created, etc.).
+
+Finally, we combined 2023 and 2024 to make one complete dataset. From the Box Office Mojo data, we could keep the movie title, gross revenue, and movie release date information. From the Youtube comment data, we could keep the Youtube link, the created word list, and the overall sentiment values calulated from each word list. In our model, we can use the sentiment analysis value to predict our gross revenue data. 
+
+
 Use before-and-after comparisons (tables or summaries) to make it visually clear.
 
 # Exploratory Data Analysis (EDA)
@@ -94,6 +103,12 @@ Provide suggestions for further work or recommendations based on findings.
 # References
 
 Cite all data sources, articles, and tools used in the project.
+
+[1] https://en.wikipedia.org/wiki/List_of_biggest_box-office_bombs 
+[2] https://www.cnn.com/2019/04/30/entertainment/sonic-the-hedgehog-trailer-reactions-trnd/index.html 
+[3] https://deadline.com/2025/01/sonic-the-hedgehog-franchise-one-billion-global-box-office-milestone-1236246684/
+[4] https://www.boxofficemojo.com/year/2023/
+[5] https://www.boxofficemojo.com/year/2024/
 
 # Appendix
 
