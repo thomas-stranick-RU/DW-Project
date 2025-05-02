@@ -21,7 +21,7 @@ movies_2024_tidy
 
 #setting up youtube links
 
-youtube_links <- readxl::read_xlsx("Data Wrangling Project.xlsx") %>% 
+youtube_links <- readxl::read_xlsx("Youtube Links 2024.xlsx") %>% 
   mutate(code = str_remove_all(link, "https?://(www\\.)?youtube\\.com/watch\\?v=")) %>% 
   select(movie,code)
 
