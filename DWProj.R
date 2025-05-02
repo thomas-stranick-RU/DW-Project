@@ -14,6 +14,8 @@ url="https://www.boxofficemojo.com/year/2024/"
 
 movies_2024 <- url %>% read_html() %>% html_elements("table")%>% html_table(fill = TRUE) %>% pluck(1)
 
+movies_2024
+
 movies_2024_tidy <- movies_2024 %>% mutate(release_date = as.Date(paste(movies_2024$`Release Date`, "2024"),"%b %d %Y")) %>% 
   mutate(gross = as.numeric(str_remove_all(Gross,"[$,]"))) %>% select(movie = "Release",gross,release_date)
 
@@ -54,7 +56,7 @@ for (i in 1:nrow(youtube_links)) {
   movies_with_links$data[i] <- list(date_filtered)
 }
 
-print(movies_with_links,n=90)
+head(movies_with_links$data[[1]],3)
 
 #denest by token and remove all timestamps, non-words, and stop words
 
@@ -76,6 +78,6 @@ for (i in 1:nrow(movies_with_links)) {
   movies_with_links$score[i] <- sentiment_scores$n[2] - sentiment_scores$n[1]
 }
 
-print(movies_with_links,n=90)
+movies_with_links$data[[1]]
 
 movies_with_links %>% ggplot(aes(x=gross,y=score)) + geom_point()
