@@ -22,7 +22,7 @@ movies_2023_MGRD <- movies_2023 %>% mutate(release_date = as.Date(paste(movies_2
 #write_csv(movies_2023_MGRD, "C:/Users/polynLin/Desktop/mypart/movies_2023_MGRD.csv")
 
 #read the sheet
-movies_2023_MGRDL <- read_csv("movies&link&gross&releaseddate.csv")
+movies_2023_MGRDL <- read_csv("data/movies&link&gross&releaseddate.csv")
 
 #combine these two sheet into one
 colnames(movies_2023_MGRDL) <- tolower(colnames(movies_2023_MGRDL))
@@ -65,6 +65,7 @@ movies_merged_final <- movies_merged_final %>%
   filter(tolower(link) != "link")
 
 #scarping comments
+for (i in 1:nrow(movies_merged_final)) {
   cat("Processing:", movies_merged_final$movie[i], "\n")
   
   video_id <- movies_merged_final$link[i]
@@ -152,5 +153,5 @@ movies_final_model <- movies_final_sentiment %>%
   filter(!is.na(sentiment_score), !is.na(gross), gross > 0) %>%
   mutate(log_gross = log(gross))
 
-#write_csv(movies_final_model, "movies_2023_tidy")
+#write_csv(movies_final_model, "data/movies_2023_tidy")
 

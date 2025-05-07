@@ -2,22 +2,23 @@ library(tidyverse)
 library(httr)
 library(jsonlite)
 library(tidytext)
+library(rvest)
 
 #2024 Cleaning
 
 #Box Office Mojo: Box Office Numbers
-library(rvest)
+
 url="https://www.boxofficemojo.com/year/2024/"
 
 #Web scraping site for top grossing movies list
 movies_mojo_2024 <- url %>% read_html() %>% html_elements("table")%>% html_table(fill = TRUE) %>% pluck(1)
 
 #Data tidying; updating release date, gross revenue
-movies_mojo_2024_tidy <- movies_2024 %>% mutate(release_date = as.Date(paste(movies_2024$`Release Date`, "2024"),"%b %d %Y")) %>% 
+movies_mojo_2024_tidy <- movies_mojo_2024 %>% mutate(release_date = as.Date(paste(movies_mojo_2024$`Release Date`, "2024"),"%b %d %Y")) %>% 
   mutate(gross = as.numeric(str_remove_all(Gross,"[$,]"))) %>% select(movie = "Release",gross,release_date)
 
 #YouTube Codes
-youtube_links <- readxl::read_xlsx("Youtube Links 2024.xlsx") %>% 
+youtube_links <- readxl::read_xlsx("data/Youtube Links 2024.xlsx") %>% 
   mutate(code = str_remove_all(link, "https?://(www\\.)?youtube\\.com/watch\\?v=")) %>% 
   select(movie,code)
 
@@ -48,6 +49,8 @@ for (i in 1:nrow(movies_mojo_codes)) {
   movies_gross_comments$data[i] <- list(date_filtered)
 }
 
+#head(movies_gross_comments$data[[1]],3)
+
 #removing release date and YouTube code
 movies_sentiment <- movies_gross_comments %>% select(movie,gross)
 
@@ -71,42 +74,5 @@ for (i in 1:nrow(movies_sentiment)) {
 }
 movies_2024 <- movies_sentiment %>% select(movie,gross,score)
 
-write.csv(movies_2024,"movies_2024_tidy")
+write.csv(movies_2024,"data/movies_2024_tidy.csv")
 
-#sentiment visualization
-nrc_sentiment <- get_sentiments("nrc")
-
-min_sentiment <- movies_with_links %>% filter(score == min(score))
-max_sentiment <- movies_with_links %>% filter(score == max(score))
-inner_join(max_sentiment$data[[1]],nrc_sentiment) %>% 
-  group_by(sentiment) %>% summarise(count = n()) %>% ggplot(aes(x = sentiment, y = count, fill=sentiment)) +
-  geom_bar(stat = "identity")
-
-library(plotly)
-ggplotly(movies_with_links %>% 
-           ggplot(aes(x=score,y=log(gross),color=score, text=paste("Movie:", movie))) + 
-           scale_color_gradient(low = "red", high="green")+
-           geom_point(),tooltip = "text")
-
-#afinn scoring
-afinn_sentiment <- get_sentiments("afinn")
-for (i in 1:nrow(movies_with_links)) {
-  sentiment_score <- movies_with_links$data[[i]] %>%
-    inner_join(afinn_sentiment, by = "word") %>% 
-    summarise(avg_sentiment = mean(value, na.rm = TRUE),total_words = n())
-  movies_with_links$avg_sentiment[i] <- sentiment_score$avg_sentiment
-}
-
-movies_with_links
-
-sentiment_2024 <- movies_with_links %>% select(movie,gross,score)
-
-sentiment_2024 %>% ggplot(aes(x=log(gross),y=score)) + geom_point()
-
-#for bottom of model
-pred <- predict(model, newdata = movies_with_links)
-res <- log(movies_with_links$gross) - pred
-
-mse <- mean(res^2)
-mse
-range(log(movies_with_links$gross))

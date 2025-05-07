@@ -17,7 +17,7 @@ combined_movies <- rbind(movies_2023_combine,movies_2024_combine)
 combined_movies
 
 #Trend of 2023 Data
-ggplot(movies_2023_tidy, aes(x = score, y = log(gross))) +
+trend_2023 <- ggplot(movies_2023_tidy, aes(x = score, y = log(gross))) +
   geom_point(color = "blue", alpha = 0.7) +
   geom_smooth(method = "lm", se = FALSE, color = "red") +
   labs(
@@ -26,6 +26,10 @@ ggplot(movies_2023_tidy, aes(x = score, y = log(gross))) +
     y = "Log(Gross Revenue)"
   ) +
   theme_minimal()
+
+png("trend_2023.png", width = 800, height = 600)
+plot(cars)
+dev.off()
 
 #2024 trend
 ggplot(movies_2024_tidy, aes(x = score, y = log(gross))) +

@@ -9,7 +9,10 @@ library(tidyverse)
 library(httr)
 library(jsonlite)
 library(tidytext)
-library(usethis)
+library(rvest)
+library(ggplot2)
+library(plotly)
+library(ggrepel)
 ```
 
 # Sentiment of Movies
@@ -22,47 +25,141 @@ Data Wrangling and Husbandry, Stevenson Bolivar Atuesta
 
 # Executive Summary
 
-This section should summarize the project in a concise, compelling manner, as if presenting to a business stakeholder or client. Include:
-Context of the project – Why is this analysis important?
-Data sources – Briefly state where the data comes from and why it was chosen.
-Main objective – What problem does the project address?
-Key insights – The most valuable and actionable takeaways from the analysis.
-Brief methodology – High-level summary of the data wrangling and analysis process.
-
 If you were making a movie, releasing a product, or just putting something out there for the world to see, wouldn't you want to know it would be a failure beforehand? Or at least know how to change your product so that it will become a successful release? Utilizing audience sentiment from movie trailers to help predict how much money your movie will earn, and in turn how successful it will be, could be a beneficial strategy for answering these questions. YouTube is the primary site for companies to release trailers and for audience to give feedback in the way of comments. So we primarily utilized the YouTube API and Box Office Mojo to find audience sentiment of trailers on YouTube and compared that with the gross earnings of a movie's release. 
 Using these resources, we would like to answer the question; Can audience sentiment on a pre-release movie trailer from YouTube, predict how much revenue or how successful a movie will be post-release? In our analysis, we combined and cleaned data from 2023 and 2024 movies, gathering YouTube links to query the API, removing stop-words and non-words for sentiment analysis, and readying box office data to be interpretable in our model. Our key takeaways from this analysis, mainly showed that using solely audience sentiment to predict gross revenue was not feasible. Many high grossing movies did not have the best audience sentiment scores, and some that had higher scores were lower grossing. Although it may not be possible to predict how well a movie will do based soley on audience sentiment from YouTube trailers, it could be a useful covariate in further analysis of the same issue.
 
 
 # Introduction
 
-Problem Statement – Define the issue being addressed.
-Project Relevance – Why is this project important? Who would benefit from the insights?
-Dataset Overview – Explain the source of the datasets, what they contain, and any initial observations.
-Goal of the Analysis – Clearly state the objectives and expected outcomes.
-
 Every year movies are released that are considered "box office bombs", most recently being Furiosa: A Mad Max Saga (2024) and Joker: Folie a Deux (2024). These movies lost \$120 and \$144 million respectively, when comparing their gross revenue to the cost to produce the film [1]. In anticipation of these movies, studios release trailers to show a preview of their movie that is coming out soon. Audiences globally get a chance to see a snippet of the movie before it releases and give their impressions and opinions. We can use sentiment analysis of these opinions to see how they think and feel about the movie. How can we predict the overall gross revenue of a movie before it is released by using sentiment analysis from pre-release trailers?
 
 Using the audiences reaction to trailers could save studios millions of dollars, by making the movie more likable by the audience, or not releasing it all together. One famous example of using audience feedback to benefit a movie was the first Sonic the Hedgehog movie, where audience backlash over character design forced the creators to alter it [2]. Now the franchise is worth over 1 billion dollars and releasing it's third movie in the series [3]. Sentiment analysis of audience reaction could also generally translate to any business use case. If a company is releasing a product, it would be beneficial to know what the general audience thinks of it before selling. This way, the business can make its product more appealing to the customer, thus increasing sales and profitability.
 
-For our sentiment analysis we chose to utilize YouTube comments left on trailers for the top grossing films of 2023 and 2024 that we can extract using the Youtube API. These comments contain positive or negative opinions about the trailer that we can then analyze for our sentiment analysis and use in a prediction model. The links for each Youtube video were gathered manually, as there was no dataset readily available. For our box office gross revenue data, we used web scraping on the Box Office Mojo website and found the gross revenue data for 2023 and 2024 movies [4,5]. 
+For our sentiment analysis we chose to utilize YouTube comments left on trailers for the top grossing films of 2023 and 2024 that we can extract using the Youtube API [4]. These comments contain positive or negative opinions about the trailer that we can then analyze for our sentiment analysis and use in a prediction model. The links for each Youtube video were gathered manually, as there was no dataset readily available [5]. For our box office gross revenue data, we used web scraping on the Box Office Mojo website and found the gross revenue data for 2023 and 2024 movies [6,7]. 
 
 Utilizing the comment and gross revenue datasets from 2023 and 2024, we can combine them and create a model that can predict gross revenue from emotional sentiment of trailers. Here, we will use 2023 to train a model, and 2024 to test and compare the results. This model as well as in depth sentiment analysis, will be the main objectives for our analysis, and can help movie studios determine if their movie will be a success or a flop. We will also take a closer look at some of the most extreme positive and negative sentiment trailers, and see how much those movies made in gross revenue.
 
 # Data Wrangling & Cleaning
 
-Describe the datasets before and after cleaning, making sure to present the process in a way that a client could understand:
-
-Initial State of the Data – Size, missing values, inconsistencies, or errors.
-Cleaning Process – Handling of missing values, duplicates, transformations, and formatting.
-Data Merging – How were the datasets combined? What challenges were encountered?
-Final Cleaned Dataset – Summary of the cleaned data (columns retained, new features created, etc.).
-Use before-and-after comparisons (tables or summaries) to make it visually clear.
-
 Cleaning the gross revenue data from Box Office Mojo was relatively straightforward. To start, we removed movies that were re-releases, since audiences would already know what they would be seeing. After that, we needed to convert some of the information into usable data, such as removing some of the characters from the gross revenue column to make it a number, and making sure that the dates contained their year and were in the correct format. We also only wanted to keep the release date, movie title, and gross revenue data to use in our analysis.
 
-The YouTube comment data was a bit trickier. After gathering all of the Youtube video links for each movie on the Box Office Mojo list created, we could then utilize the Youtube API to extract the comments from each trailer. This provided a few roadblocks. We wanted to make sure we were only looking at comments that were left before the release of the movie, since we did not want sentiments from someone who had already seen it. Here we joined the Box Office Mojo dataset on the YouTube video link data, and compared all comments with the movie release provided by the Box Office Mojo dataset. Some of the trailers did not contain comments, as the channel owner can turn them off on the video. We removed these from our analysis. On the remaining movies, we then needed to separate each word in the comment for our sentiment analysis. YouTube comments contain a number of different things such as video time stamps, other links, and emojis, that needed to be removed. We also needed to remove stop words such as "the", "and", or "but", since these would not convey emotion. Once we had only meaningful words, these could be analyzed by the "bing" sentiment dataset and determined to be positive or negative.
+Below and throughout this section we show the comparisons for 2024 data, because the data cleaning for 2023 and 2024 is visually the same.
+
+**Box Office Mojo Before Tidying:**
+```{r, echo=FALSE}
+url="https://www.boxofficemojo.com/year/2024/"
+
+#Web scraping site for top grossing movies list
+movies_mojo_2024 <- url %>% read_html() %>% html_elements("table")%>% html_table(fill = TRUE) %>% pluck(1)
+
+movies_mojo_2024
+```
+
+**Box Office Mojo After Tidying:**
+```{r, echo=FALSE}
+#Data tidying; updating release date, gross revenue
+movies_mojo_2024_tidy <- movies_mojo_2024 %>% mutate(release_date = as.Date(paste(movies_mojo_2024$`Release Date`, "2024"),"%b %d %Y")) %>% 
+  mutate(gross = as.numeric(str_remove_all(Gross,"[$,]"))) %>% select(movie = "Release",gross,release_date)
+
+movies_mojo_2024_tidy
+```
+
+The YouTube comment data was a bit trickier. After gathering all of the Youtube video links for each movie on the Box Office Mojo list created, we could then utilize the Youtube API to extract the comments from each trailer. First, we joined the Box Office Mojo dataset on the YouTube video link data, and compared all comments with the movie release provided by the Box Office Mojo dataset. Some of the trailers did not contain comments, as the channel owner can turn them off on the video. We removed these from our analysis. 
+
+**YouTube Codes Joined on Box Office Mojo Data:**
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#YouTube Codes
+youtube_links <- readxl::read_xlsx("data/Youtube Links 2024.xlsx") %>% 
+  mutate(code = str_remove_all(link, "https?://(www\\.)?youtube\\.com/watch\\?v=")) %>% 
+  select(movie,code)
+
+#left join to merge mojo table with YouTube codes
+movies_mojo_codes <- left_join(youtube_links,movies_mojo_2024_tidy, by= join_by(movie))
+
+movies_mojo_codes
+```
+
+We also ran into a few roadblocks. We wanted to make sure we were only looking at comments that were left before the release of the movie, since we did not want sentiments from someone who had already seen it.
+
+**After Getting Comments from YouTube API:**
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+#YouTube API
+api_key = "AIzaSyDIjgqQFmPSa9ExEfy0mHDYI7KOfO-M3OA"
+
+movies_gross_comments <- movies_mojo_codes %>% select(movie,gross)
+
+#for each movie, getting comments, filtering by release date of movie
+for (i in 1:nrow(movies_mojo_codes)) {
+  url <- paste0("https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=", 
+                movies_mojo_codes$code[i], "&maxResults=100&order=relevance&key=", api_key)
+  
+  res <- GET(url)
+  data <- fromJSON(content(res, "text"))
+  
+  comments <- data.frame(
+    DatePosted = as.Date(unlist(data$items$snippet$topLevelComment$snippet$publishedAt)),
+    Comment = unlist(data$items$snippet$topLevelComment$snippet$textDisplay)
+  )
+
+  date_filtered <- comments %>% 
+    filter(DatePosted < movies_mojo_codes$release_date[i])
+  
+  movies_gross_comments$data[i] <- list(date_filtered)
+}
+
+movies_gross_comments
+```
+
+**Example of Extracted Comments:**
+```{r, echo=FALSE}
+head(movies_gross_comments$data[[1]],3)
+```
+
+
+On the remaining movies, we then needed to separate each word in the comment for our sentiment analysis. YouTube comments contain a number of different things such as video time stamps, other links, and emojis, that needed to be removed. We also needed to remove stop words such as "the", "and", or "but", since these would not convey emotion. 
+
+**After Separating Comments by Words:**
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+#removing release date and YouTube code
+movies_sentiment <- movies_gross_comments %>% select(movie,gross)
+#denest by token and remove all timestamps, non-words, and stop words
+for (i in 1:nrow(movies_gross_comments)) {
+  movies_sentiment$data[[i]] <- movies_gross_comments$data[[i]] %>% select(Comment) %>% 
+    mutate(Comment = str_remove_all(Comment,"<a[^>]*?>.*?</a>")) %>% 
+    unnest_tokens(word, Comment) %>%
+    anti_join(stop_words) %>% 
+    mutate(word = str_replace_all(word,"[^[:alpha:]\\s]","")) %>% 
+    filter(word != "")
+}
+
+movies_sentiment
+```
+
+**Example of Comments by Word:**
+```{r, echo=FALSE}
+head(movies_sentiment$data[[1]],10)
+```
+
+
+Once we had only meaningful words, these could be analyzed by the "bing" sentiment dataset and determined to be positive or negative.
+
+**After Calculating Sentiment Scores:**
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#get the overall sentiment score with bing
+bing_sentiment <- get_sentiments("bing")
+for (i in 1:nrow(movies_sentiment)) {
+  sentiment_scores <- movies_sentiment$data[[i]] %>%
+    inner_join(bing_sentiment, by = "word") %>%
+    count(sentiment)
+  movies_sentiment$score[i] <- sentiment_scores$n[2] - sentiment_scores$n[1]
+}
+movies_2024 <- movies_sentiment %>% select(movie,gross,score)
+movies_2024
+```
 
 Finally, we combined 2023 and 2024 to make one complete dataset. From the Box Office Mojo data, we could keep the movie title, gross revenue, and movie release date information. From the YouTube comment data, we could keep the Youtube link, the created word list, and the overall sentiment values calculated from each word list. In our model, we can use the sentiment analysis value to predict our gross revenue data. 
+
+
 
 
 # Exploratory Data Analysis (EDA)
@@ -92,12 +189,16 @@ Cite all data sources, articles, and tools used in the project.
 [1] https://en.wikipedia.org/wiki/List_of_biggest_box-office_bombs 
 [2] https://www.cnn.com/2019/04/30/entertainment/sonic-the-hedgehog-trailer-reactions-trnd/index.html 
 [3] https://deadline.com/2025/01/sonic-the-hedgehog-franchise-one-billion-global-box-office-milestone-1236246684/
-[4] https://www.boxofficemojo.com/year/2023/
-[5] https://www.boxofficemojo.com/year/2024/
+[4] https://console.cloud.google.com/marketplace/product/google/youtube.googleapis.com?inv=1&invt=Abww2A&authuser=2&project=dw-proj-457014 
+[5] https://www.youtube.com/
+[6] https://www.boxofficemojo.com/year/2023/
+[7] https://www.boxofficemojo.com/year/2024/
 
 # Appendix
 
 Data Cleaning Process – Full details on transformations, missing value handling, etc.
 Code Snippets – Well-commented Python or R code used in the analysis.
+
+
 Additional Visualizations – Any extra plots that support the findings.
 Each section in the main report should reference the appendix where technical details are provided.
