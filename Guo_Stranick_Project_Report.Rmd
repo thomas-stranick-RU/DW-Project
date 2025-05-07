@@ -41,7 +41,7 @@ Utilizing the comment and gross revenue datasets from 2023 and 2024, we can comb
 
 # Data Wrangling & Cleaning
 
-Cleaning the gross revenue data from Box Office Mojo was relatively straightforward. To start, we removed movies that were re-releases, since audiences would already know what they would be seeing. After that, we needed to convert some of the information into usable data, such as removing some of the characters from the gross revenue column to make it a number, and making sure that the dates contained their year and were in the correct format. We also only wanted to keep the release date, movie title, and gross revenue data to use in our analysis.
+Cleaning the gross revenue data from Box Office Mojo was relatively straightforward. To start, we removed movies that were re-releases, since audiences would already know what they would be seeing. After that, we needed to convert some of the information into usable data, such as removing some of the characters from the gross revenue column to make it a number, and making sure that the dates contained their year and were in the correct format. We also only wanted to keep the release date, movie title, and gross revenue data to use in our analysis. 
 
 Below and throughout this section we show the comparisons for 2024 data, because the data cleaning for 2023 and 2024 is visually the same.
 
@@ -111,7 +111,7 @@ movies_gross_comments
 ```
 
 **Example of Extracted Comments:**
-```{r, echo=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 head(movies_gross_comments$data[[1]],3)
 ```
 
@@ -140,8 +140,7 @@ movies_sentiment
 head(movies_sentiment$data[[1]],10)
 ```
 
-
-Once we had only meaningful words, these could be analyzed by the "bing" sentiment dataset and determined to be positive or negative.
+Once we had only meaningful words, these could be analyzed by the "bing" sentiment dataset and determined to be positive or negative. We took the difference between the amount of words identified as postivie, by the amount identified as negative as our sentiment score. This would indicate the overall sentiment of the movie based on the trailer over all comments collected.
 
 **After Calculating Sentiment Scores:**
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
@@ -159,22 +158,210 @@ movies_2024
 
 Finally, we combined 2023 and 2024 to make one complete dataset. From the Box Office Mojo data, we could keep the movie title, gross revenue, and movie release date information. From the YouTube comment data, we could keep the Youtube link, the created word list, and the overall sentiment values calculated from each word list. In our model, we can use the sentiment analysis value to predict our gross revenue data. 
 
+**Combined movies table with years:**
 
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+movies_2023_tidy <- tibble(read.csv("data/movies_2023_tidy") %>% select(movie,gross,score = sentiment_score))
 
+movies_2024_tidy <- tibble(read.csv("data/movies_2024_tidy") %>% select(movie,gross,score))
+
+movies_2023_combine <- movies_2023_tidy %>% mutate(year = 2023)
+movies_2024_combine <- movies_2024_tidy %>% mutate(year = 2024)
+combined_movies <- rbind(movies_2023_combine,movies_2024_combine)
+combined_movies
+```
+
+Please refer to Appendix B on Data Cleaning & Transformation for more technical details. And Appendix C for reproducable data wrangling code.
 
 # Exploratory Data Analysis (EDA)
 
-Overview of the Data After Cleaning – Key statistics and distributions.
-Visualizations – Charts, histograms, and boxplots to identify trends and patterns.
-Key Insights – Findings that help answer the project’s main questions.
-Clear Explanations – Interpret the insights in a way that a client could use for decision-making.
+At a first glance, between the two years there showed a different trend in the data of gross by sentiment score. In 2023, there was a slightly increasing trend between the two key variables, in 2024 there was a slight decreasing trend. In the following trend graphs, we have normalized the gross revenue using the log function. 
+
+**2023 Trend:**
+```{r, echo=FALSE, message=FALSE}
+trend_2023 <- ggplot(movies_2023_tidy, aes(x = score, y = log(gross))) +
+  geom_point(color = "blue", alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "2023 Sentiment Score vs Log(Gross)",
+    x = "Sentiment Score",
+    y = "Log(Gross Revenue)"
+  ) +
+  theme_minimal()
+```
+
+**2024 Trend**
+```{r, echo=FALSE, message=FALSE}
+ggplot(movies_2024_tidy, aes(x = score, y = log(gross))) +
+  geom_point(color = "blue", alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "2024 Sentiment Score vs Log(Gross)",
+    x = "Sentiment Score",
+    y = "Log(Gross Revenue)"
+  ) +
+  theme_minimal()
+```
+
+Looking at the combined data below, we can see that the movies are dispersed and the trend line is slightly upward. This indicates that there is not a strong trend in predicting the gross revenue from the sentiment score of the trailers of the movies.
+
+We can look at some of the outliers to see some of the extreme differences in gross and sentiment score. "Inside Out 2" which was the highest grossing movie, only had a sentiment score of 6. The second lowest grossing movie "Showing Up", had a higher sentiment score of 57. A 51 point positive difference. Similarly, the highest sentiment scored movie "The Color Purple" at +145, had a gross earnings of \$16,571,549. Whereas the lowest sentiment scored movie "Mufasa: The Lion King" at -56 had a gross earnings of \$128,143,945. A difference of \$111,572,396, which is a significant amount of money.
+
+**Overall Trend and Outliers:**
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#combined trend
+extreme_points <- combined_movies %>%
+  filter(score > quantile(score, 0.995) | score < quantile(score, 0.005) | 
+           gross > quantile(gross, 0.995) | gross < quantile(gross, 0.005))
+
+ ggplot(combined_movies, aes(x = score, y = log(gross))) +
+  geom_point(color = "blue", alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+   geom_point(data = extreme_points, aes(x = score, y = log(gross)),
+              color = "orange", size = 3, shape = 17) +  # Highlight extreme points
+   geom_text_repel(data = extreme_points, aes(x = score, y = log(gross), label = paste("\nMovie:", movie,"\nGross:", gross, "\nScore:", score)), 
+             color = "black", size = 3, vjust = -0.5, hjust = 0.5) +
+  labs(
+    title = "2023-2024 Sentiment Score vs Log(Gross)",
+    x = "Sentiment Score",
+    y = "Log(Gross Revenue)"
+  ) +
+  theme_minimal()
+```
+
+We can take a deeper look at the extremities of our data through top 15 histograms. 
+
+With the top sentiment score movies, the majority have low gross revenue values. Using the log() of the gross to normalize the gross revenue data. we can see that 8 of the movies do not break a log(gross) value of 17. In the bottom sentiment score movies, we can see that only 5 do not break the 17 mark. In our extreme samples, many of the lower sentiment movies actually perform better in the box office.
+
+**Top 15 Sentiment Scored Movies by Gross Revenue:**
+```{r, echo=FALSE}
+#Select the top 15 sentiment by gross
+top_sentiment_movies <- combined_movies %>%
+  filter(!is.na(score)) %>%
+  slice_max(order_by = score, n = 15)
+
+top_sentiment_movies <- top_sentiment_movies[-12,]
+
+ggplot(top_sentiment_movies, aes(x = reorder(movie, score), y = log(gross))) +
+  geom_col(fill = "lightgreen") +
+  geom_text(aes(label = log(gross)), 
+            hjust = -0.1, 
+            size = 3) + 
+  coord_flip() +
+  labs(
+    title = "Top 15 Sentiment Movies by Gross",
+    x = "Movie",
+    y = "Gross Revenue"
+  ) +
+  theme_minimal()
+```
+
+**Bottom 15 Sentiment Scored Movies by Gross Revenue:**
+```{r, echo=FALSE}
+#The 15 lowest sentiment score 
+low_sentiment_movies <- combined_movies %>%
+  filter(!is.na(score)) %>%
+  slice_min(order_by = score, n = 15)
+
+ggplot(low_sentiment_movies, aes(x = reorder(movie, score), y = log(gross))) +
+  geom_col(fill = "tomato") +
+  geom_text(aes(label = log(gross)), 
+            hjust = -0.1, 
+            size = 3) +
+  coord_flip() +
+  labs(
+    title = "Bottom 15 Sentiment Movies by Gross ",
+    x = "Movie",
+    y = "Gross Revenue"
+  ) +
+  theme_minimal()
+```
+
+If we want to look at the top and bottom grossing movies by sentiment score, we can also see an interesting trend. The highest grossing movies, here have one value in the negative, and many values hovering around 40. The bottom grossing movies do have 2 movies in the negative, but the rest with a positive score, although many of the values being lower. This shows that many of the top grossing movies do recieve positive sentiment scores, although not the best.
+
+**Top 15 Grossing Movies by Sentiment Score:**
+```{r, echo=FALSE}
+#Select the top 15 grossing by sentiment
+top_sentiment_movies <- combined_movies %>%
+  filter(!is.na(score)) %>%
+  slice_max(order_by = gross, n = 15)
+
+ggplot(top_sentiment_movies, aes(x = reorder(movie, gross), y = score)) +
+  geom_col(aes(fill = score > 0)) +
+  geom_text(aes(label = score), 
+            hjust = -0.1, 
+            size = 3) + 
+  scale_fill_manual(values = c("TRUE" = "lightgreen", "FALSE" = "tomato"), guide = "none") +
+  coord_flip() +
+  labs(
+    title = "Top 15 Grossing Movies by Sentiment Score",
+    x = "Movie",
+    y = "Sentiment Score (positive - negative)"
+  ) +
+  theme_minimal()
+```
+
+**Bottom 15 Grossing Movies by Sentiment Score:**
+```{r, echo=FALSE}
+#The 15 lowest grossing by sentiment
+low_sentiment_movies <- combined_movies %>%
+  filter(!is.na(score)) %>%
+  slice_min(order_by = gross, n = 15)
+
+ggplot(low_sentiment_movies, aes(x = reorder(movie, gross), y = score)) +
+  geom_col(aes(fill = score > 0)) +
+  geom_text(aes(label = score), 
+            hjust = 1.1, 
+            size = 3) +
+  scale_fill_manual(values = c("TRUE" = "lightgreen", "FALSE" = "tomato"), guide = "none") +
+  coord_flip() +
+  labs(
+    title = "Bottom 15 Grossing Movies by Sentiment Score",
+    x = "Movie",
+    y = "Sentiment Score (positive - negative)"
+  ) +
+  theme_minimal()
+```
+
+Finally we can take a look at our model that tries to predict the gross revenue using the sentiment scores. We trained this model on the 2023 data to predict the 2024 gross revenue using it's sentiment scores.
+
+Looking at the summary of the model trained on our 2023 data, the p value for score is at 0.00316 which means at a 0.01 level it does have some impact on the gross revenue. For every 1 point of sentiment score increase, the revenue will increase by \$557,091. However, looking at the residuals we have a minimum of -\$90,268,315 and a maximum of \$579,969,546, indicating that we have some extreme outliers. Also our R^2 value of 0.049 indicates that the model is not a good fit for the data, since a value of 1 would be ideal.
+
+```{r, echo=FALSE}
+model <- lm(gross ~ score, data = movies_2023_tidy)
+summary(model)
+```
+
+We can use this model to predict 2024 movie's gross revenue by it's YouTube trailer sentiment scores. Looking at the plot below, we can see that the points do not fall on the line projected from our linear model. Showing that this model is not a good fit for our data and cannot predict gross income.
+
+```{r echo=FALSE}
+prediction <- predict(model, newdata = movies_2024_tidy)
+
+predicted <- data.frame(actual = movies_2024_tidy$gross, predicted = prediction)
+
+ggplot(predicted,aes(x = actual, y = predicted)) +
+  geom_point(color = "blue", alpha = 0.6) +
+  geom_abline(intercept = 0, slope = 1, color = "red", linetype = "dashed") +
+  labs(
+    title = "2024 Movies Actual vs Predicted Gross Income",
+    x = "Actual Gross Income",
+    y = "Predicted Gross Income"
+  )
+
+```
+
+Please refer to Appendix C for more reproducible code relating to the EDA.
 
 # Key Insights & Discussion
 
-Summary of Findings – What were the most relevant takeaways from the EDA?
-Business or Practical Implications – Why do these findings matter? How can they be applied?
-Challenges Faced – What were the main difficulties encountered in data cleaning or analysis?
-Limitations & Next Steps – Any restrictions on the data, and what could be done in future analysis.
+From our EDA, we can learn that using the sentiment scores of movie trailers from YouTube to figure out if a movie will be successful is not straightforward. Being a movie with a high sentiment value does not necessarily mean that you have a high grossing movie. And having a lower sentiment value does not necessarily mean you will have a low grossing movie. We also learned that the trend of sentiment and gross revenue can vary over different years. Thus, using one year of sentiment and gross data to predict the next year's may not be a viable strategy.
+
+In order to practically use our findings, one may need to create a more complex model that includes other covariates such as ticket price, genre of movie, time of year, and how many advertisements were run before the movie release. Using this analysis in conjuction with the more complex model could be more useful in predicting whether a movie would be successful or not before release. This could be true in producing a movie or a product, where there are most likely mose covariates that are in play.
+
+The main difficulties that were encountered during data cleaning mostly came from the YouTube comments. The YouTube API did not give us very many options in what comments we could download, so we had to pick the most relevant, according to the API, and then filter on date. We could not pick a date and get comments explicitly from then. We also could not find a dataset for YouTube links, so we needed to complete that task manually. Another issue that arose when planning the project and our analysis, was utilizing budget values to see whether or not a movie made or lost money. This information would have been better at determining whether or not a movie was successful or not. Looking at soley gross revenue is not ideal, since it could have cost the studio much more to make the film.
+
+Again, for future analysis we might be able to expand the model to include more covariates and see if we can predict a movie's gross revenue better. We could also try to find a subset of movies that have reported their budget values to see whether they made or lost money. We might also be able to expand our dataset more and find more revenue values for more years to create a better trend.
 
 # Conclusion
 
@@ -182,23 +369,565 @@ Recap the project workflow (data wrangling, merging, and analysis).
 Emphasize the most significant insights gained.
 Provide suggestions for further work or recommendations based on findings.
 
+Our project set out to answer the question: How can we predict the overall gross revenue of a movie before it is released by using sentiment analysis from pre-release trailers? We utilized the Box Office Mojo gross revenue data for movies from 2023 and 2024, and combined it with YouTube comment data from each movie's trailer. Using both of these years, we could see that higher sentiment movies do not always imply higher grossing, as well as lower sentiment does not imply lower grossing. Many movies that had very high sentiment values, did not top the charts in the box office revenue. Our model trained on 2023 data was also unsuccessful in predicting 2024 gross revenue on it's sentiment scores. In future work, we could expand how we try to predict the gross revenue of movies by incorporating other covariates such as genre and number of advertisements that may have a more significant impact. 
+
 # References
 
 Cite all data sources, articles, and tools used in the project.
 
 [1] https://en.wikipedia.org/wiki/List_of_biggest_box-office_bombs 
+
 [2] https://www.cnn.com/2019/04/30/entertainment/sonic-the-hedgehog-trailer-reactions-trnd/index.html 
+
 [3] https://deadline.com/2025/01/sonic-the-hedgehog-franchise-one-billion-global-box-office-milestone-1236246684/
+
 [4] https://console.cloud.google.com/marketplace/product/google/youtube.googleapis.com?inv=1&invt=Abww2A&authuser=2&project=dw-proj-457014 
+
 [5] https://www.youtube.com/
+
 [6] https://www.boxofficemojo.com/year/2023/
+
 [7] https://www.boxofficemojo.com/year/2024/
 
-# Appendix
+# Appendix A: Data Sources & Schema
 
-Data Cleaning Process – Full details on transformations, missing value handling, etc.
-Code Snippets – Well-commented Python or R code used in the analysis.
+**1. Data Sources**
+
+* Box Office Mojo 2023 
+* Box Office Mojo 2024
+* YouTube API
+* Manual YouTube Codes 2023
+* Manual YouTube Codes 2024
+  
+**2. Data Schema:**
+
+* movie (string): movie title
+* release date (date): release date of movie
+* gross (int): gross revenue of movie
+* code (string): code of YouTube video
+* data (list): either comment data or word data once de-nested
+* score (int): difference in bing sentiment score
+
+# Appendix B: Data Cleaning & Transformation Steps
+
+**2023 Data Cleaning & Transformation**
+
+*1. Standardizing Box Office Mojo*
+```{r, eval=FALSE}
+
+```
 
 
-Additional Visualizations – Any extra plots that support the findings.
-Each section in the main report should reference the appendix where technical details are provided.
+*2. Manual YouTube Links and Joining Mojo Data*
+```{r, eval=FALSE}
+```
+
+
+*3. YouTube Comments*
+```{r, eval=FALSE}
+
+```
+
+
+*4. De-Nesting Words from Comments*
+```{r, eval=FALSE}
+
+```
+
+
+**2024 Data Cleaning & Transformation**
+
+*1. Standardizing Box Office Mojo*
+
+```{r eval=FALSE}
+movies_mojo_2024_tidy <- movies_mojo_2024 %>% mutate(release_date = as.Date(paste(movies_mojo_2024$`Release Date`, "2024"),"%b %d %Y")) %>% 
+  mutate(gross = as.numeric(str_remove_all(Gross,"[$,]"))) %>% select(movie = "Release",gross,release_date)
+```
+
+Need to make sure the data string is in a date format, specifically month, day, year.
+
+Remove the \$ and , from the gross value to make it a number.
+
+Keep the release date as well so we can filter on it for YouTube comments.
+
+*2. Manual YouTube Links*
+```{r, eval=FALSE}
+youtube_links <- readxl::read_xlsx("data/Youtube Links 2024.xlsx") %>% 
+  mutate(code = str_remove_all(link, "https?://(www\\.)?youtube\\.com/watch\\?v=")) %>% 
+  select(movie,code)
+```
+
+Make sure to remove the front part of the URL to get the code for the API.
+
+*3. YouTube Comments*
+```{r, eval=FALSE}
+for (i in 1:nrow(movies_mojo_codes)) {
+  url <- paste0("https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=", 
+  movies_mojo_codes$code[i], "&maxResults=100&order=relevance&key=", api_key)
+  
+  res <- GET(url)
+  data <- fromJSON(content(res, "text"))
+  
+  comments <- data.frame(
+    DatePosted = as.Date(unlist(data$items$snippet$topLevelComment$snippet$publishedAt)),
+    Comment = unlist(data$items$snippet$topLevelComment$snippet$textDisplay)
+  )
+
+  date_filtered <- comments %>% 
+    filter(DatePosted < movies_mojo_codes$release_date[i])
+  
+  movies_gross_comments$data[i] <- list(date_filtered)
+}
+```
+
+From the YouTube API data, we must extract the comments labeled "topLevelComment\$snippet\$textDisplay" and the comment published date of "topLevelComment\$snippet\$publishedAt". 
+
+We also need to filter the comments on the release date of the movie coming from the Box Office Mojo data.
+
+*4. De-Nesting Words from Comments*
+```{r, eval = FALSE}
+for (i in 1:nrow(movies_gross_comments)) {
+  movies_sentiment$data[[i]] <- movies_gross_comments$data[[i]] %>% select(Comment) %>% 
+    mutate(Comment = str_remove_all(Comment,"<a[^>]*?>.*?</a>")) %>% 
+    unnest_tokens(word, Comment) %>%
+    anti_join(stop_words) %>% 
+    mutate(word = str_replace_all(word,"[^[:alpha:]\\s]","")) %>% 
+    filter(word != "")
+}
+```
+
+We need to de-nest the words from the comments gathered from the YouTube API. 
+
+We want to remove all timestamp values, denoted with <a>...</a>, stop words, as well as remove all non-words such as emojis or other characters.
+
+# Appendix C: Code for Reproducability
+
+**2023 Tidying Code for Reproducability**
+
+```{r, eval=FALSE}
+library(tidyverse)
+library(httr)
+library(jsonlite)
+library(tidytext)
+library(usethis)
+library(dplyr)
+library(readr)
+library(rvest)
+
+#1
+# scraping data from mojo and save as a file
+url="https://www.boxofficemojo.com/year/2023/"
+
+movies_2023 <- url %>% read_html() %>% html_elements("table")%>% html_table(fill = TRUE) %>% pluck(1)
+
+#movies_2023
+# filter movie, gross, release_date and save as a new file
+movies_2023_MGRD <- movies_2023 %>% mutate(release_date = as.Date(paste(movies_2023$`Release Date`, "2023"),"%b %d %Y")) %>% 
+  mutate(gross = as.numeric(str_remove_all(Gross,"[$,]"))) %>% select(movie = "Release",gross,release_date)
+
+#movies_2023_MGRD
+#write_csv(movies_2023_MGRD, "C:/Users/polynLin/Desktop/mypart/movies_2023_MGRD.csv")
+
+#read the sheet
+movies_2023_MGRDL <- read_csv("data/movies&link&gross&releaseddate.csv")
+
+#combine these two sheet into one
+colnames(movies_2023_MGRDL) <- tolower(colnames(movies_2023_MGRDL))
+colnames(movies_2023_MGRD) <- tolower(colnames(movies_2023_MGRD))
+
+movies_2023_MGRDL <- movies_2023_MGRDL %>%
+  mutate(release_date = as.Date(release_date, format = "%d/%m/%Y"))
+movies_2023_MGRD <- movies_2023_MGRD %>%
+  mutate(release_date = as.Date(release_date))
+# combine them and save the value that are similar, and keep the values from scraped sheet if any two values are not the same
+#the new sheet has movie, gross, release_date, link
+movies_merged_final<- full_join(movies_2023_MGRDL, movies_2023_MGRD, by = "movie") %>%
+  mutate(
+    gross = coalesce(movies_2023_MGRD$gross, movies_2023_MGRDL$gross),
+    release_date = coalesce(movies_2023_MGRD$release_date, movies_2023_MGRDL$release_date),
+    link = movies_2023_MGRDL$link
+  ) %>%
+  select(movie, gross, release_date, link)
+
+# save as a new CSV
+#write_csv(movies_merged_final, "C:/Users/polynLin/Desktop/mypart/movies_merged_final.csv")
+
+
+#2scraping comments from YouTube
+#getting the data from API
+library(httr)
+library(jsonlite)
+library(dplyr)
+
+movies_merged_final$release_date <- as.Date(movies_merged_final$release_date)
+
+movies_merged_final$data <- vector("list", nrow(movies_merged_final))
+
+api_key = "AIzaSyDIjgqQFmPSa9ExEfy0mHDYI7KOfO-M3OA"
+
+# clean the link values 
+movies_merged_final$link <- gsub('^["\']+|["\']+$', '', movies_merged_final$link)
+
+movies_merged_final <- movies_merged_final %>%
+  filter(tolower(link) != "link")
+
+#scarping comments
+for (i in 1:nrow(movies_merged_final)) {
+  cat("Processing:", movies_merged_final$movie[i], "\n")
+  
+  video_id <- movies_merged_final$link[i]
+  release_date <- movies_merged_final$release_date[i]
+  
+  url <- paste0("https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=", 
+                video_id, "&maxResults=100&order=relevance&key=", api_key)
+  
+  res <- tryCatch(GET(url), error = function(e) return(NULL))
+  
+  if (!is.null(res) && status_code(res) == 200) {
+    data <- fromJSON(content(res, "text", encoding = "UTF-8"))
+    
+    if (!is.null(data$items) && length(data$items) > 0) {
+      comments <- data.frame(
+        DatePosted = as.Date(sapply(data$items$snippet$topLevelComment$snippet$publishedAt, substr, 1, 10)),
+        Comment = sapply(data$items$snippet$topLevelComment$snippet$textDisplay, identity),
+        stringsAsFactors = FALSE
+      )
+      
+      date_filtered <- comments %>%
+        filter(DatePosted < release_date)
+      #filter the movies
+      movies_merged_final$data[[i]] <- date_filtered
+    }
+  }
+}
+
+movies_merged_final
+
+# check the comments number of movies
+#sorted_movies <- movies_merged_final %>%
+#  arrange(comment_count) %>%
+#  select(movie, comment_count)
+#head(sorted_movies, 10)
+
+# renew the number of comments
+movies_merged_final$comment_count <- sapply(movies_merged_final$data, function(x) length(x$Comment))
+
+# filter comments==0 or movies include "re-release" 
+filtered_movies <- movies_merged_final %>%
+  filter(comment_count > 0) %>%
+  filter(!grepl("re[- ]release", movie, ignore.case = TRUE)) %>%
+  arrange(comment_count) %>%
+  select(movie, comment_count)
+head(filtered_movies, 10)
+#write_csv(filtered_movies, "C:/Users/polynLin/Desktop/mypart/filtered_movies.csv")
+
+#3
+library(tidytext)
+library(dplyr)
+library(tidyr)
+
+# loading "bing" stop words
+bing <- get_sentiments("bing")
+data("stop_words")
+# combine all these comments
+all_comments <- movies_merged_final %>%
+  filter(lengths(data) > 0) %>%
+  select(movie, data) %>%
+  unnest(cols = c(data)) %>%
+  filter(!is.na(Comment) & Comment != "")
+# split comments
+comments_tokenized <- all_comments %>%
+  unnest_tokens(word, Comment) %>%
+  anti_join(stop_words, by = "word") %>%
+  inner_join(bing, by = "word")
+# count the numbers of words
+movie_sentiment_stats <- comments_tokenized %>%
+  count(movie, sentiment) %>%
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>%
+  mutate(
+    sentiment_score = positive - negative,
+    total_words = positive + negative,
+    avg_sentiment = sentiment_score / total_words
+  ) %>%
+  arrange(desc(avg_sentiment))
+
+movies_final_sentiment <- filtered_movies %>%
+  left_join(movie_sentiment_stats, by = "movie")
+head(movies_final_sentiment, 10)
+
+movies_final_model <- movies_final_sentiment %>%
+  left_join(movies_merged_final %>% select(movie, gross), by = "movie") %>%
+  filter(!is.na(sentiment_score), !is.na(gross), gross > 0) %>%
+  mutate(log_gross = log(gross))
+
+movies_final_model
+
+#write_csv(movies_final_model, "data/movies_2023_tidy")
+
+```
+
+
+**2024 Tidying Code for Reproducability**
+
+```{r, eval=FALSE}
+library(tidyverse)
+library(httr)
+library(jsonlite)
+library(tidytext)
+library(rvest)
+
+#2024 Cleaning
+
+#Box Office Mojo: Box Office Numbers
+
+url="https://www.boxofficemojo.com/year/2024/"
+
+#Web scraping site for top grossing movies list
+movies_mojo_2024 <- url %>% read_html() %>% html_elements("table")%>% html_table(fill = TRUE) %>% pluck(1)
+
+#Data tidying; updating release date, gross revenue
+movies_mojo_2024_tidy <- movies_mojo_2024 %>% mutate(release_date = as.Date(paste(movies_mojo_2024$`Release Date`, "2024"),"%b %d %Y")) %>% 
+  mutate(gross = as.numeric(str_remove_all(Gross,"[$,]"))) %>% select(movie = "Release",gross,release_date)
+
+#YouTube Codes
+youtube_links <- readxl::read_xlsx("data/Youtube Links 2024.xlsx") %>% 
+  mutate(code = str_remove_all(link, "https?://(www\\.)?youtube\\.com/watch\\?v=")) %>% 
+  select(movie,code)
+
+#left join to merge mojo table with YouTube codes
+movies_mojo_codes <- left_join(youtube_links,movies_mojo_2024_tidy, by= join_by(movie))
+
+#YouTube API
+api_key = "AIzaSyDIjgqQFmPSa9ExEfy0mHDYI7KOfO-M3OA"
+
+movies_gross_comments <- movies_mojo_codes %>% select(movie,gross)
+
+#for each movie, getting comments, filtering by release date of movie
+for (i in 1:nrow(movies_mojo_codes)) {
+  url <- paste0("https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=", 
+                movies_mojo_codes$code[i], "&maxResults=100&order=relevance&key=", api_key)
+  
+  res <- GET(url)
+  data <- fromJSON(content(res, "text"))
+  
+  comments <- data.frame(
+    DatePosted = as.Date(unlist(data$items$snippet$topLevelComment$snippet$publishedAt)),
+    Comment = unlist(data$items$snippet$topLevelComment$snippet$textDisplay)
+  )
+
+  date_filtered <- comments %>% 
+    filter(DatePosted < movies_mojo_codes$release_date[i])
+  
+  movies_gross_comments$data[i] <- list(date_filtered)
+}
+
+#head(movies_gross_comments$data[[1]],3)
+
+#removing release date and YouTube code
+movies_sentiment <- movies_gross_comments %>% select(movie,gross)
+
+#denest by token and remove all timestamps, non-words, and stop words
+for (i in 1:nrow(movies_gross_comments)) {
+  movies_sentiment$data[[i]] <- movies_gross_comments$data[[i]] %>% select(Comment) %>% 
+    mutate(Comment = str_remove_all(Comment,"<a[^>]*?>.*?</a>")) %>% 
+    unnest_tokens(word, Comment) %>%
+    anti_join(stop_words) %>% 
+    mutate(word = str_replace_all(word,"[^[:alpha:]\\s]","")) %>% 
+    filter(word != "")
+}
+
+#get the overall sentiment score with bing
+bing_sentiment <- get_sentiments("bing")
+for (i in 1:nrow(movies_sentiment)) {
+  sentiment_scores <- movies_sentiment$data[[i]] %>%
+    inner_join(bing_sentiment, by = "word") %>%
+    count(sentiment)
+  movies_sentiment$score[i] <- sentiment_scores$n[2] - sentiment_scores$n[1]
+}
+movies_2024 <- movies_sentiment %>% select(movie,gross,score)
+
+write.csv(movies_2024,"data/movies_2024_tidy.csv")
+```
+
+**Sentiment Analysis and Model**
+
+```{r, eval=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(plotly)
+library(ggrepel)
+
+#Sentiment Analysis and Model
+
+movies_2023_tidy <- tibble(read.csv("movies_2023_tidy") %>% select(movie,gross,score = sentiment_score))
+movies_2023_tidy
+
+movies_2024_tidy <- tibble(read.csv("movies_2024_tidy") %>% select(movie,gross,score))
+movies_2024_tidy
+
+movies_2023_combine <- movies_2023_tidy %>% mutate(year = 2023)
+movies_2024_combine <- movies_2024_tidy %>% mutate(year = 2024)
+combined_movies <- rbind(movies_2023_combine,movies_2024_combine)
+combined_movies
+
+#Trend of 2023 Data
+trend_2023 <- ggplot(movies_2023_tidy, aes(x = score, y = log(gross))) +
+  geom_point(color = "blue", alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "2023 Sentiment Score vs Log(Gross)",
+    x = "Sentiment Score",
+    y = "Log(Gross Revenue)"
+  ) +
+  theme_minimal()
+
+#2024 trend
+ggplot(movies_2024_tidy, aes(x = score, y = log(gross))) +
+  geom_point(color = "blue", alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "2024 Sentiment Score vs Log(Gross)",
+    x = "Sentiment Score",
+    y = "Log(Gross Revenue)"
+  ) +
+  theme_minimal()
+
+#combined trend
+extreme_points <- combined_movies %>%
+  filter(score > quantile(score, 0.995) | score < quantile(score, 0.005) | 
+           gross > quantile(gross, 0.995) | gross < quantile(gross, 0.005))
+
+ ggplot(combined_movies, aes(x = score, y = log(gross))) +
+  geom_point(color = "blue", alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+   geom_point(data = extreme_points, aes(x = score, y = log(gross)),
+              color = "orange", size = 3, shape = 17) +  # Highlight extreme points
+   geom_text_repel(data = extreme_points, aes(x = score, y = log(gross), label = paste("\nMovie:", movie,"\nGross:", gross, "\nScore:", score)), 
+             color = "black", size = 3, vjust = -0.5, hjust = 0.5) +
+  labs(
+    title = "2023-2024 Sentiment Score vs Log(Gross)",
+    x = "Sentiment Score",
+    y = "Log(Gross Revenue)"
+  ) +
+  theme_minimal()
+
+#Select the top 15 sentiment by gross
+top_sentiment_movies <- combined_movies %>%
+  filter(!is.na(score)) %>%
+  slice_max(order_by = score, n = 15)
+
+top_sentiment_movies <- top_sentiment_movies[-12,]
+
+ggplot(top_sentiment_movies, aes(x = reorder(movie, score), y = log(gross))) +
+  geom_col(fill = "lightgreen") +
+  geom_text(aes(label = log(gross)), 
+            hjust = -0.1, 
+            size = 3) + 
+  coord_flip() +
+  labs(
+    title = "Top 15 Sentiment Movies by Gross",
+    x = "Movie",
+    y = "Gross Revenue"
+  ) +
+  theme_minimal()
+
+#The 15 lowest sentiment score 
+low_sentiment_movies <- combined_movies %>%
+  filter(!is.na(score)) %>%
+  slice_min(order_by = score, n = 15)
+
+ggplot(low_sentiment_movies, aes(x = reorder(movie, score), y = log(gross))) +
+  geom_col(fill = "tomato") +
+  geom_text(aes(label = log(gross)), 
+            hjust = -0.1, 
+            size = 3) +
+  coord_flip() +
+  labs(
+    title = "Bottom 15 Sentiment Movies by Gross ",
+    x = "Movie",
+    y = "Gross Revenue"
+  ) +
+  theme_minimal()
+
+
+#Select the top 15 grossing by sentiment
+top_sentiment_movies <- combined_movies %>%
+  filter(!is.na(score)) %>%
+  slice_max(order_by = gross, n = 15)
+
+ggplot(top_sentiment_movies, aes(x = reorder(movie, gross), y = score)) +
+  geom_col(aes(fill = score > 0)) +
+  geom_text(aes(label = score), 
+            hjust = -0.1, 
+            size = 3) + 
+  scale_fill_manual(values = c("TRUE" = "lightgreen", "FALSE" = "tomato"), guide = "none") +
+  coord_flip() +
+  labs(
+    title = "Top 15 Grossing Movies by Sentiment Score",
+    x = "Movie",
+    y = "Sentiment Score (positive - negative)"
+  ) +
+  theme_minimal()
+
+#The 15 lowest grossing by sentiment
+low_sentiment_movies <- combined_movies %>%
+  filter(!is.na(score)) %>%
+  slice_min(order_by = gross, n = 15)
+
+ggplot(low_sentiment_movies, aes(x = reorder(movie, gross), y = score)) +
+  geom_col(aes(fill = score > 0)) +
+  geom_text(aes(label = score), 
+            hjust = 1.1, 
+            size = 3) +
+  scale_fill_manual(values = c("TRUE" = "lightgreen", "FALSE" = "tomato"), guide = "none") +
+  coord_flip() +
+  labs(
+    title = "Bottom 15 Grossing Movies by Sentiment Score",
+    x = "Movie",
+    y = "Sentiment Score (positive - negative)"
+  ) +
+  theme_minimal()
+
+#Predictive linear model
+
+model <- lm(gross ~ score, data = movies_2023_tidy)
+summary(model)
+
+prediction <- predict(model, newdata = movies_2024_tidy)
+
+predicted <- data.frame(actual = movies_2024_tidy$gross, predicted = prediction)
+
+ggplot(predicted,aes(x = actual, y = predicted)) +
+  geom_point(color = "blue", alpha = 0.6) +
+  geom_abline(intercept = 0, slope = 1, color = "red", linetype = "dashed") +
+  labs(
+    title = "2024 Movies Actual vs Predicted Gross Income",
+    x = "Actual Gross Income",
+    y = "Predicted Gross Income"
+  )
+```
+
+# Appendix D: Data Analysis and Processing
+
+**Data Cleaning**
+
+*Movies with 0 Comments (comments turned off on YouTube Video)*
+
+* 2023 - 33/200
+* 2024 - 10/100
+  
+*Inconsistent Formats*
+
+* 2023 - 0/200
+* 2024 - 0/100
+
+**Data Merging**
+
+* Records before merge: 200 (2023), 100 (2024)
+* Records after merge: 167 (2023), 90 (2024)
+* Key matching columns: movie, gross, score, year
+  
+**EDA Adjustments**
+
+* Normalization: Gross revenue normalized in some plots using log()
+* Sentiment Calculation: calulated bing sentiment score for each movie

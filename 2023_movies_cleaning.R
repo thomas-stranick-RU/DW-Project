@@ -32,6 +32,7 @@ movies_2023_MGRDL <- movies_2023_MGRDL %>%
   mutate(release_date = as.Date(release_date, format = "%d/%m/%Y"))
 movies_2023_MGRD <- movies_2023_MGRD %>%
   mutate(release_date = as.Date(release_date))
+
 # combine them and save the value that are similar, and keep the values from scraped sheet if any two values are not the same
 #the new sheet has movie, gross, release_date, link
 movies_merged_final<- full_join(movies_2023_MGRDL, movies_2023_MGRD, by = "movie") %>%
@@ -152,6 +153,8 @@ movies_final_model <- movies_final_sentiment %>%
   left_join(movies_merged_final %>% select(movie, gross), by = "movie") %>%
   filter(!is.na(sentiment_score), !is.na(gross), gross > 0) %>%
   mutate(log_gross = log(gross))
+
+movies_final_model
 
 #write_csv(movies_final_model, "data/movies_2023_tidy")
 

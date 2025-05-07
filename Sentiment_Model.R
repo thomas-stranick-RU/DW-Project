@@ -27,10 +27,6 @@ trend_2023 <- ggplot(movies_2023_tidy, aes(x = score, y = log(gross))) +
   ) +
   theme_minimal()
 
-png("trend_2023.png", width = 800, height = 600)
-plot(cars)
-dev.off()
-
 #2024 trend
 ggplot(movies_2024_tidy, aes(x = score, y = log(gross))) +
   geom_point(color = "blue", alpha = 0.7) +
@@ -44,16 +40,16 @@ ggplot(movies_2024_tidy, aes(x = score, y = log(gross))) +
 
 #combined trend
 extreme_points <- combined_movies %>%
-  filter(score > quantile(score, 0.99) | score < quantile(score, 0.01) | 
-           gross > quantile(gross, 0.99) | gross < quantile(gross, 0.01))
+  filter(score > quantile(score, 0.995) | score < quantile(score, 0.005) | 
+           gross > quantile(gross, 0.995) | gross < quantile(gross, 0.005))
 
  ggplot(combined_movies, aes(x = score, y = log(gross))) +
   geom_point(color = "blue", alpha = 0.7) +
   geom_smooth(method = "lm", se = FALSE, color = "red") +
    geom_point(data = extreme_points, aes(x = score, y = log(gross)),
               color = "orange", size = 3, shape = 17) +  # Highlight extreme points
-   geom_text_repel(data = extreme_points, aes(x = score, y = log(gross), label = movie), 
-             color = "black", size = 3, vjust = -1, hjust = 1) +
+   geom_text_repel(data = extreme_points, aes(x = score, y = log(gross), label = paste("\nMovie:", movie,"\nGross:", gross, "\nScore:", score)), 
+             color = "black", size = 3, vjust = -0.5, hjust = 0.5) +
   labs(
     title = "2023-2024 Sentiment Score vs Log(Gross)",
     x = "Sentiment Score",
@@ -61,20 +57,23 @@ extreme_points <- combined_movies %>%
   ) +
   theme_minimal()
 
-#Select the top 15 positive review movies
+#Select the top 15 sentiment by gross
 top_sentiment_movies <- combined_movies %>%
   filter(!is.na(score)) %>%
   slice_max(order_by = score, n = 15)
 
 top_sentiment_movies <- top_sentiment_movies[-12,]
 
-ggplot(top_sentiment_movies, aes(x = reorder(movie, score), y = score)) +
+ggplot(top_sentiment_movies, aes(x = reorder(movie, score), y = log(gross))) +
   geom_col(fill = "lightgreen") +
+  geom_text(aes(label = log(gross)), 
+            hjust = -0.1, 
+            size = 3) + 
   coord_flip() +
   labs(
-    title = "Top 15 Movies by Sentiment Score",
+    title = "Top 15 Sentiment Movies by Gross",
     x = "Movie",
-    y = "Sentiment Score (positive - negative)"
+    y = "Gross Revenue"
   ) +
   theme_minimal()
 
@@ -83,11 +82,53 @@ low_sentiment_movies <- combined_movies %>%
   filter(!is.na(score)) %>%
   slice_min(order_by = score, n = 15)
 
-ggplot(low_sentiment_movies, aes(x = reorder(movie, score), y = score)) +
+ggplot(low_sentiment_movies, aes(x = reorder(movie, score), y = log(gross))) +
   geom_col(fill = "tomato") +
+  geom_text(aes(label = log(gross)), 
+            hjust = -0.1, 
+            size = 3) +
   coord_flip() +
   labs(
-    title = "Bottom 15 Movies by Sentiment Score",
+    title = "Bottom 15 Sentiment Movies by Gross ",
+    x = "Movie",
+    y = "Gross Revenue"
+  ) +
+  theme_minimal()
+
+
+#Select the top 15 grossing by sentiment
+top_sentiment_movies <- combined_movies %>%
+  filter(!is.na(score)) %>%
+  slice_max(order_by = gross, n = 15)
+
+ggplot(top_sentiment_movies, aes(x = reorder(movie, gross), y = score)) +
+  geom_col(aes(fill = score > 0)) +
+  geom_text(aes(label = score), 
+            hjust = -0.1, 
+            size = 3) + 
+  scale_fill_manual(values = c("TRUE" = "lightgreen", "FALSE" = "tomato"), guide = "none") +
+  coord_flip() +
+  labs(
+    title = "Top 15 Grossing Movies by Sentiment Score",
+    x = "Movie",
+    y = "Sentiment Score (positive - negative)"
+  ) +
+  theme_minimal()
+
+#The 15 lowest grossing by sentiment
+low_sentiment_movies <- combined_movies %>%
+  filter(!is.na(score)) %>%
+  slice_min(order_by = gross, n = 15)
+
+ggplot(low_sentiment_movies, aes(x = reorder(movie, gross), y = score)) +
+  geom_col(aes(fill = score > 0)) +
+  geom_text(aes(label = score), 
+            hjust = 1.1, 
+            size = 3) +
+  scale_fill_manual(values = c("TRUE" = "lightgreen", "FALSE" = "tomato"), guide = "none") +
+  coord_flip() +
+  labs(
+    title = "Bottom 15 Grossing Movies by Sentiment Score",
     x = "Movie",
     y = "Sentiment Score (positive - negative)"
   ) +
