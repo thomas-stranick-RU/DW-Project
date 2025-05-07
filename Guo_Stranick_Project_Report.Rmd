@@ -502,6 +502,8 @@ We want to remove all timestamp values, denoted with <a>...</a>, stop words, as 
 
 # Appendix C: Code for Reproducability
 
+GitHub Repository: https://github.com/thomas-stranick-RU/DW-Project 
+
 **2023 Tidying Code for Reproducability**
 
 ```{r, eval=FALSE}
