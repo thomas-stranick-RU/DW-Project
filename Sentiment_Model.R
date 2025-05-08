@@ -67,7 +67,7 @@ top_sentiment_movies <- top_sentiment_movies[-12,]
 ggplot(top_sentiment_movies, aes(x = reorder(movie, score), y = log(gross))) +
   geom_col(fill = "lightgreen") +
   geom_text(aes(label = log(gross)), 
-            hjust = -0.1, 
+            hjust = 1.1, 
             size = 3) + 
   coord_flip() +
   labs(
@@ -85,7 +85,7 @@ low_sentiment_movies <- combined_movies %>%
 ggplot(low_sentiment_movies, aes(x = reorder(movie, score), y = log(gross))) +
   geom_col(fill = "tomato") +
   geom_text(aes(label = log(gross)), 
-            hjust = -0.1, 
+            hjust = 1.1, 
             size = 3) +
   coord_flip() +
   labs(

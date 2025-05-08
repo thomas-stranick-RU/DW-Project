@@ -25,7 +25,11 @@ Data Wrangling and Husbandry, Stevenson Bolivar Atuesta
 
 # Executive Summary
 
-If you were making a movie, releasing a product, or just putting something out there for the world to see, wouldn't you want to know it would be a failure beforehand? Or at least know how to change your product so that it will become a successful release? Utilizing audience sentiment from movie trailers to help predict how much money your movie will earn, and in turn how successful it will be, could be a beneficial strategy for answering these questions. YouTube is the primary site for companies to release trailers and for audience to give feedback in the way of comments. So we primarily utilized the YouTube API and Box Office Mojo to find audience sentiment of trailers on YouTube and compared that with the gross earnings of a movie's release. Using these resources, we would like to answer the question; Can audience sentiment on a pre-release movie trailer from YouTube, predict how much revenue or how successful a movie will be post-release? In our analysis, we combined and cleaned data from 2023 and 2024 movies, gathering YouTube links to query the API, removing stop-words and non-words for sentiment analysis, and readying box office data to be interpretable in our model. Our key takeaways from this analysis, mainly showed that using solely audience sentiment to predict gross revenue was not feasible. Many high grossing movies did not have the best audience sentiment scores, and some that had higher scores were lower grossing. Although it may not be possible to predict how well a movie will do based soley on audience sentiment from YouTube trailers, it could be a useful covariate in further analysis of the same issue.
+If you were making a movie, releasing a product, or just putting something out there for the world to see, wouldn't you want to know it would be a failure beforehand? Or at least know how to change your product so that it will become a successful release?
+
+Utilizing audience sentiment from movie trailers to help predict how much money your movie will earn, and in turn how successful it will be, could be a beneficial strategy for answering these questions. YouTube is the primary site for companies to release trailers and for audience to give feedback in the way of comments. So we primarily utilized the YouTube API and Box Office Mojo to find audience sentiment of trailers on YouTube and compared that with the gross earnings of a movie's release. Using these resources, we would like to answer the question; Can audience sentiment on a pre-release movie trailer from YouTube, predict how much revenue or how successful a movie will be post-release? 
+
+In our analysis, we combined and cleaned data from 2023 and 2024 movies, gathering YouTube links to query the API, removing stop-words and non-words for sentiment analysis, and readying box office data to be interpretable in our model. Our key takeaways from this analysis, mainly showed that using solely audience sentiment to predict gross revenue was not feasible. Many high grossing movies did not have the best audience sentiment scores, and some that had higher scores were lower grossing. Although it may not be possible to predict how well a movie will do based soley on audience sentiment from YouTube trailers, it could be a useful covariate in further analysis of the same issue.
 
 # Introduction
 
@@ -185,7 +189,7 @@ At a first glance, between the two years there showed a different trend in the d
 **2023 Trend:**
 
 ```{r, echo=FALSE, message=FALSE}
-trend_2023 <- ggplot(movies_2023_tidy, aes(x = score, y = log(gross))) +
+ggplot(movies_2023_tidy, aes(x = score, y = log(gross))) +
   geom_point(color = "blue", alpha = 0.7) +
   geom_smooth(method = "lm", se = FALSE, color = "red") +
   labs(
@@ -254,7 +258,7 @@ top_sentiment_movies <- top_sentiment_movies[-12,]
 ggplot(top_sentiment_movies, aes(x = reorder(movie, score), y = log(gross))) +
   geom_col(fill = "lightgreen") +
   geom_text(aes(label = log(gross)), 
-            hjust = -0.1, 
+            hjust = 1.1, 
             size = 3) + 
   coord_flip() +
   labs(
@@ -276,7 +280,7 @@ low_sentiment_movies <- combined_movies %>%
 ggplot(low_sentiment_movies, aes(x = reorder(movie, score), y = log(gross))) +
   geom_col(fill = "tomato") +
   geom_text(aes(label = log(gross)), 
-            hjust = -0.1, 
+            hjust = 1.1, 
             size = 3) +
   coord_flip() +
   labs(
