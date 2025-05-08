@@ -18,6 +18,7 @@ movies_2023 <- url %>% read_html() %>% html_elements("table")%>% html_table(fill
 movies_2023_MGRD <- movies_2023 %>% mutate(release_date = as.Date(paste(movies_2023$`Release Date`, "2023"),"%b %d %Y")) %>% 
   mutate(gross = as.numeric(str_remove_all(Gross,"[$,]"))) %>% select(movie = "Release",gross,release_date)
 
+write.csv(movies_2023,"data/movies_mojo_2023.csv")
 #movies_2023_MGRD
 #write_csv(movies_2023_MGRD, "C:/Users/polynLin/Desktop/mypart/movies_2023_MGRD.csv")
 
@@ -95,7 +96,7 @@ for (i in 1:nrow(movies_merged_final)) {
   }
 }
 
-movies_merged_final
+movies_2023_unnested <- movies_merged_final
 
 # check the comments number of movies
 #sorted_movies <- movies_merged_final %>%
@@ -115,6 +116,8 @@ filtered_movies <- movies_merged_final %>%
 head(filtered_movies, 10)
 #write_csv(filtered_movies, "C:/Users/polynLin/Desktop/mypart/filtered_movies.csv")
 
+movies_merged_final
+
 #3
 library(tidytext)
 library(dplyr)
@@ -129,6 +132,7 @@ all_comments <- movies_merged_final %>%
   select(movie, data) %>%
   unnest(cols = c(data)) %>%
   filter(!is.na(Comment) & Comment != "")
+
 # split comments
 comments_tokenized <- all_comments %>%
   unnest_tokens(word, Comment) %>%
@@ -156,5 +160,5 @@ movies_final_model <- movies_final_sentiment %>%
 
 movies_final_model
 
-#write_csv(movies_final_model, "data/movies_2023_tidy")
+#write_csv(movies_final_model, "data/movies_2023_tidy.csv")
 

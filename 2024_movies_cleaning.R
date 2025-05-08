@@ -17,6 +17,8 @@ movies_mojo_2024 <- url %>% read_html() %>% html_elements("table")%>% html_table
 movies_mojo_2024_tidy <- movies_mojo_2024 %>% mutate(release_date = as.Date(paste(movies_mojo_2024$`Release Date`, "2024"),"%b %d %Y")) %>% 
   mutate(gross = as.numeric(str_remove_all(Gross,"[$,]"))) %>% select(movie = "Release",gross,release_date)
 
+
+
 #YouTube Codes
 youtube_links <- readxl::read_xlsx("data/Youtube Links 2024.xlsx") %>% 
   mutate(code = str_remove_all(link, "https?://(www\\.)?youtube\\.com/watch\\?v=")) %>% 
@@ -49,7 +51,9 @@ for (i in 1:nrow(movies_mojo_codes)) {
   movies_gross_comments$data[i] <- list(date_filtered)
 }
 
-#head(movies_gross_comments$data[[1]],3)
+comments_2024 <- movies_gross_comments %>% unnest(data) %>% select(movie,DatePosted,Comment)
+
+write_csv(comments_2024,"data/comments_2024.csv")
 
 #removing release date and YouTube code
 movies_sentiment <- movies_gross_comments %>% select(movie,gross)
